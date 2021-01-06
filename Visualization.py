@@ -107,11 +107,13 @@ class Visualization:
     
     def __execute_algorithm(self):
         if self.state == Algorithm.BUG1:
-            algorithm = PathPlanning.Bug1(self.start, self.goal)
-            while True:
-                current_pos = algorithm.next_step()
-                self.window.set_at((current_pos[0], current_pos[1]), (0,0,255))
-                pygame.display.update()
+            algorithm = PathPlanning.Bug1(self.start, self.goal, self.map)
+        current_pos = self.start
+        while current_pos != self.goal:
+            current_pos = algorithm.next_step()
+            self.window.set_at((current_pos[0], current_pos[1]), (0,0,255))
+            pygame.display.update()
+        time.sleep(4)
 
 
     def main_loop(self):
