@@ -143,3 +143,88 @@ class Bug1(PathPlanning):
             
         
         return self.current_pos
+
+
+class Bug2(PathPlanning):
+    
+    def __init__(self, start, goal, map):
+        super().__init__(start, goal, map)
+        self.line = list(bresenham(start[0], start[1], goal[0], goal[1]))
+        self.last_wall = Direction.RIGHT
+        self.current_state = State.STRAIGHT_LINE
+        self.left_hit = False
+    
+    
+    def next_step(self):
+        if self.current_state == State.STRAIGHT_LINE:
+            if self.map[self.line[0][1]][self.line[0][0]] == 255:
+                self.current_pos = self.line[0]
+                self.line.pop(0)
+            else:
+                self.current_state = State.SURROUND
+                if self.map[self.current_pos[1]][self.current_pos[0] + 1] == 0:
+                    self.last_wall = Direction.RIGHT
+                elif self.map[self.current_pos[1]][self.current_pos[0] - 1] == 0:
+                    self.last_wall = Direction.LEFT
+                elif self.map[self.current_pos[1] + 1][self.current_pos[0]] == 0:
+                    self.last_wall = Direction.DOWN
+                elif self.map[self.current_pos[1] - 1][self.current_pos[0]] == 0:
+                    self.last_wall = Direction.UP
+                else:
+                    # It touched in a corner
+                    if self.map[self.current_pos[1] + 1][self.current_pos[0] + 1] == 0:
+                        self.current_pos = (self.current_pos[0] + 1, self.current_pos[1])
+                        self.last_wall = Direction.DOWN
+                    elif self.map[self.current_pos[1] + 1][self.current_pos[0] - 1] == 0:
+                        self.current_pos = (self.current_pos[0], self.current_pos[1] + 1)
+                        self.last_wall = Direction.LEFT
+                    elif self.map[self.current_pos[1] - 1][self.current_pos[0] - 1] == 0:
+                        self.current_pos = (self.current_pos[0] - 1, self.current_pos[1])
+                        self.last_wall = Direction.UP
+                    elif self.map[self.current_pos[1] - 1][self.current_pos[0] + 1] == 0:
+                        self.current_pos = (self.current_pos[0], self.current_pos[1] - 1)
+                        self.last_wall = Direction.RIGHT
+                    else:
+                        # This never happens
+                        pass
+        
+        elif self.current_state == State.SURROUND:
+            x, y = self.current_pos
+            if self.last_wall == Direction.RIGHT:
+                if self.map[y][x + 1] == 255:
+                    self.current_pos = (x + 1, y)
+                    self.last_wall = Direction.DOWN
+                    self.left_hit = True
+                else:
+                    self.last_wall = Direction.UP
+            elif self.last_wall == Direction.UP:
+                if self.map[y - 1][x] == 255:
+                    self.current_pos = (x, y - 1)
+                    self.last_wall = Direction.RIGHT
+                    self.left_hit = True
+                else:
+                    self.last_wall = Direction.LEFT
+            elif self.last_wall == Direction.LEFT:
+                if self.map[y][x - 1] == 255:
+                    self.current_pos = (x - 1, y)
+                    self.last_wall = Direction.UP
+                    self.left_hit = True
+                else:
+                    self.last_wall = Direction.DOWN
+            elif self.last_wall == Direction.DOWN:
+                if self.map[y + 1][x] == 255:
+                    self.current_pos = (x, y + 1)
+                    self.last_wall = Direction.LEFT
+                    self.left_hit = True
+                else:
+                    self.last_wall = Direction.RIGHT
+            
+            if (self.current_pos in self.line) and self.left_hit:
+                print('x')
+                while self.line[0] != self.current_pos:
+                    self.line.pop(0)
+                self.current_state = State.STRAIGHT_LINE
+            else:
+                print(self.left_hit)
+        
+        return self.current_pos

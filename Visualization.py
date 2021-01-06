@@ -108,6 +108,8 @@ class Visualization:
     def __execute_algorithm(self):
         if self.state == Algorithm.BUG1:
             algorithm = PathPlanning.Bug1(self.start, self.goal, self.map)
+        if self.state == Algorithm.BUG2:
+            algorithm = PathPlanning.Bug2(self.start, self.goal, self.map)
         current_pos = self.start
         while current_pos != self.goal:
             current_pos = algorithm.next_step()
