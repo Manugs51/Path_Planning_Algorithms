@@ -3,6 +3,7 @@ import pygame.event as EVENTS
 import pygame.locals as LOCALS
 from enum import Enum
 import cv2
+import PathPlanning
 
 
 bg_color = (255,255,255)
@@ -31,7 +32,7 @@ class Visualization:
         for i in range(self.window_h):
             row = []
             for j in range(self.window_w):
-                # Centrar imagen
+                # Center map
                 if i >= ((self.window_h - len(map))//2) and i < ((self.window_h - len(map))//2 + len(map)) and \
                 j >= ((self.window_w - len(map[0]))//2) and j < ((self.window_w - len(map[0]))//2 + len(map[0])):
                     row.append(map[i - ((self.window_h - len(map))//2)][j - ((self.window_w - len(map[0]))//2)])
@@ -54,11 +55,10 @@ class Visualization:
             if e.type == pygame.MOUSEBUTTONDOWN:
                 for button in buttons:
                     if button.collidepoint(e.pos):
-                        self.state = button.y/button_separation
+                        self.state = Algorithm(button.y/button_separation)
 
 
     def __home(self):
-    
         button_x = 300
         button_width = 300
         button_height = 50
@@ -107,7 +107,11 @@ class Visualization:
     
     def __execute_algorithm(self):
         if self.state == Algorithm.BUG1:
-            pass
+            algorithm = PathPlanning.Bug1(self.start, self.goal)
+            while True:
+                current_pos = algorithm.next_step()
+                self.window.set_at((current_pos[0], current_pos[1]), (0,0,255))
+                pygame.display.update()
 
 
     def main_loop(self):
