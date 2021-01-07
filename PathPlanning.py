@@ -55,7 +55,7 @@ class PathPlanning:
         return closest_neighbor
 
 
-class Bug1(PathPlanning):
+class Bug(PathPlanning):
     
     def __init__(self, start, goal, map):
         super().__init__(start, goal, map)
@@ -63,6 +63,78 @@ class Bug1(PathPlanning):
         self.last_wall = Direction.RIGHT
         self.current_state = State.STRAIGHT_LINE
         self.left_hit = False
+    
+    
+    def straight_line(self):
+        if self.map[self.line[0][1]][self.line[0][0]] == 255:
+            self.current_pos = self.line[0]
+            self.line.pop(0)
+        else:
+            self.current_state = State.SURROUND
+            if self.map[self.current_pos[1]][self.current_pos[0] + 1] == 0:
+                self.last_wall = Direction.RIGHT
+            elif self.map[self.current_pos[1]][self.current_pos[0] - 1] == 0:
+                self.last_wall = Direction.LEFT
+            elif self.map[self.current_pos[1] + 1][self.current_pos[0]] == 0:
+                self.last_wall = Direction.DOWN
+            elif self.map[self.current_pos[1] - 1][self.current_pos[0]] == 0:
+                self.last_wall = Direction.UP
+            else:
+                # It touched in a corner
+                if self.map[self.current_pos[1] + 1][self.current_pos[0] + 1] == 0:
+                    self.current_pos = (self.current_pos[0] + 1, self.current_pos[1])
+                    self.last_wall = Direction.DOWN
+                elif self.map[self.current_pos[1] + 1][self.current_pos[0] - 1] == 0:
+                    self.current_pos = (self.current_pos[0], self.current_pos[1] + 1)
+                    self.last_wall = Direction.LEFT
+                elif self.map[self.current_pos[1] - 1][self.current_pos[0] - 1] == 0:
+                    self.current_pos = (self.current_pos[0] - 1, self.current_pos[1])
+                    self.last_wall = Direction.UP
+                elif self.map[self.current_pos[1] - 1][self.current_pos[0] + 1] == 0:
+                    self.current_pos = (self.current_pos[0], self.current_pos[1] - 1)
+                    self.last_wall = Direction.RIGHT
+                else:
+                    # This never happens
+                    pass
+    
+    
+    def surround(self):
+        x, y = self.current_pos
+        if self.last_wall == Direction.RIGHT:
+            if self.map[y][x + 1] == 255:
+                self.current_pos = (x + 1, y)
+                self.last_wall = Direction.DOWN
+                self.left_hit = True
+            else:
+                self.last_wall = Direction.UP
+        elif self.last_wall == Direction.UP:
+            if self.map[y - 1][x] == 255:
+                self.current_pos = (x, y - 1)
+                self.last_wall = Direction.RIGHT
+                self.left_hit = True
+            else:
+                self.last_wall = Direction.LEFT
+        elif self.last_wall == Direction.LEFT:
+            if self.map[y][x - 1] == 255:
+                self.current_pos = (x - 1, y)
+                self.last_wall = Direction.UP
+                self.left_hit = True
+            else:
+                self.last_wall = Direction.DOWN
+        elif self.last_wall == Direction.DOWN:
+            if self.map[y + 1][x] == 255:
+                self.current_pos = (x, y + 1)
+                self.last_wall = Direction.LEFT
+                self.left_hit = True
+            else:
+                self.last_wall = Direction.RIGHT
+
+
+class Bug1(Bug):
+    
+    def __init__(self, start, goal, map):
+        super().__init__(start, goal, map)
+        self.hit_point = self.start
         self.surroundings = {}
     
     
@@ -72,65 +144,12 @@ class Bug1(PathPlanning):
                 self.current_pos = self.line[0]
                 self.line.pop(0)
             else:
-                self.current_state = State.SURROUND
-                if self.map[self.current_pos[1]][self.current_pos[0] + 1] == 0:
-                    self.last_wall = Direction.RIGHT
-                elif self.map[self.current_pos[1]][self.current_pos[0] - 1] == 0:
-                    self.last_wall = Direction.LEFT
-                elif self.map[self.current_pos[1] + 1][self.current_pos[0]] == 0:
-                    self.last_wall = Direction.DOWN
-                elif self.map[self.current_pos[1] - 1][self.current_pos[0]] == 0:
-                    self.last_wall = Direction.UP
-                else:
-                    # It touched in a corner
-                    if self.map[self.current_pos[1] + 1][self.current_pos[0] + 1] == 0:
-                        self.current_pos = (self.current_pos[0] + 1, self.current_pos[1])
-                        self.last_wall = Direction.DOWN
-                    elif self.map[self.current_pos[1] + 1][self.current_pos[0] - 1] == 0:
-                        self.current_pos = (self.current_pos[0], self.current_pos[1] + 1)
-                        self.last_wall = Direction.LEFT
-                    elif self.map[self.current_pos[1] - 1][self.current_pos[0] - 1] == 0:
-                        self.current_pos = (self.current_pos[0] - 1, self.current_pos[1])
-                        self.last_wall = Direction.UP
-                    elif self.map[self.current_pos[1] - 1][self.current_pos[0] + 1] == 0:
-                        self.current_pos = (self.current_pos[0], self.current_pos[1] - 1)
-                        self.last_wall = Direction.RIGHT
-                    else:
-                        # This never happens
-                        pass
+                self.straight_line()
                 self.hit_point = self.current_pos
                 self.left_hit = False
         
         elif self.current_state == State.SURROUND:
-            x, y = self.current_pos
-            if self.last_wall == Direction.RIGHT:
-                if self.map[y][x + 1] == 255:
-                    self.current_pos = (x + 1, y)
-                    self.last_wall = Direction.DOWN
-                    self.left_hit = True
-                else:
-                    self.last_wall = Direction.UP
-            elif self.last_wall == Direction.UP:
-                if self.map[y - 1][x] == 255:
-                    self.current_pos = (x, y - 1)
-                    self.last_wall = Direction.RIGHT
-                    self.left_hit = True
-                else:
-                    self.last_wall = Direction.LEFT
-            elif self.last_wall == Direction.LEFT:
-                if self.map[y][x - 1] == 255:
-                    self.current_pos = (x - 1, y)
-                    self.last_wall = Direction.UP
-                    self.left_hit = True
-                else:
-                    self.last_wall = Direction.DOWN
-            elif self.last_wall == Direction.DOWN:
-                if self.map[y + 1][x] == 255:
-                    self.current_pos = (x, y + 1)
-                    self.last_wall = Direction.LEFT
-                    self.left_hit = True
-                else:
-                    self.last_wall = Direction.RIGHT
+            self.surround()
             self.surroundings[self.current_pos] = self.distance(self.current_pos, self.goal)
             
             if self.current_pos == self.hit_point and self.left_hit:
@@ -145,79 +164,18 @@ class Bug1(PathPlanning):
         return self.current_pos
 
 
-class Bug2(PathPlanning):
+class Bug2(Bug):
     
     def __init__(self, start, goal, map):
         super().__init__(start, goal, map)
-        self.line = list(bresenham(start[0], start[1], goal[0], goal[1]))
-        self.last_wall = Direction.RIGHT
-        self.current_state = State.STRAIGHT_LINE
-        self.left_hit = False
     
     
     def next_step(self):
         if self.current_state == State.STRAIGHT_LINE:
-            if self.map[self.line[0][1]][self.line[0][0]] == 255:
-                self.current_pos = self.line[0]
-                self.line.pop(0)
-            else:
-                self.current_state = State.SURROUND
-                if self.map[self.current_pos[1]][self.current_pos[0] + 1] == 0:
-                    self.last_wall = Direction.RIGHT
-                elif self.map[self.current_pos[1]][self.current_pos[0] - 1] == 0:
-                    self.last_wall = Direction.LEFT
-                elif self.map[self.current_pos[1] + 1][self.current_pos[0]] == 0:
-                    self.last_wall = Direction.DOWN
-                elif self.map[self.current_pos[1] - 1][self.current_pos[0]] == 0:
-                    self.last_wall = Direction.UP
-                else:
-                    # It touched in a corner
-                    if self.map[self.current_pos[1] + 1][self.current_pos[0] + 1] == 0:
-                        self.current_pos = (self.current_pos[0] + 1, self.current_pos[1])
-                        self.last_wall = Direction.DOWN
-                    elif self.map[self.current_pos[1] + 1][self.current_pos[0] - 1] == 0:
-                        self.current_pos = (self.current_pos[0], self.current_pos[1] + 1)
-                        self.last_wall = Direction.LEFT
-                    elif self.map[self.current_pos[1] - 1][self.current_pos[0] - 1] == 0:
-                        self.current_pos = (self.current_pos[0] - 1, self.current_pos[1])
-                        self.last_wall = Direction.UP
-                    elif self.map[self.current_pos[1] - 1][self.current_pos[0] + 1] == 0:
-                        self.current_pos = (self.current_pos[0], self.current_pos[1] - 1)
-                        self.last_wall = Direction.RIGHT
-                    else:
-                        # This never happens
-                        pass
+            self.straight_line()
         
         elif self.current_state == State.SURROUND:
-            x, y = self.current_pos
-            if self.last_wall == Direction.RIGHT:
-                if self.map[y][x + 1] == 255:
-                    self.current_pos = (x + 1, y)
-                    self.last_wall = Direction.DOWN
-                    self.left_hit = True
-                else:
-                    self.last_wall = Direction.UP
-            elif self.last_wall == Direction.UP:
-                if self.map[y - 1][x] == 255:
-                    self.current_pos = (x, y - 1)
-                    self.last_wall = Direction.RIGHT
-                    self.left_hit = True
-                else:
-                    self.last_wall = Direction.LEFT
-            elif self.last_wall == Direction.LEFT:
-                if self.map[y][x - 1] == 255:
-                    self.current_pos = (x - 1, y)
-                    self.last_wall = Direction.UP
-                    self.left_hit = True
-                else:
-                    self.last_wall = Direction.DOWN
-            elif self.last_wall == Direction.DOWN:
-                if self.map[y + 1][x] == 255:
-                    self.current_pos = (x, y + 1)
-                    self.last_wall = Direction.LEFT
-                    self.left_hit = True
-                else:
-                    self.last_wall = Direction.RIGHT
+            self.surround()
             
             if (self.current_pos in self.line) and self.left_hit:
                 while self.line[0] != self.current_pos:
@@ -246,6 +204,7 @@ class ValueIteration(PathPlanning):
         
         queue = [self.goal]
         
+        # Breadth first approach
         while queue:
             current = queue.pop(0)
             
