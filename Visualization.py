@@ -175,7 +175,10 @@ if __name__ == '__main__':
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     (thresh, b_w_image) = cv2.threshold(gray_image, 127, 255, cv2.THRESH_BINARY)
     
-    #cv2.imshow('Black and white image', b_w_image)
     vis = Visualization(b_w_image)
-    vis.main_loop()
+    
+    if len(image) > vis.window_h or len(image[0]) > vis.window_w:
+        print('  The image is too big, only images of {0}x{1} are allowed'.format(vis.window_w, vis.window_h))
+    else:
+        vis.main_loop()
     
