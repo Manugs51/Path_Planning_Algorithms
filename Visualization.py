@@ -89,7 +89,9 @@ class Visualization:
             for e in EVENTS.get():
                 if e.type == LOCALS.QUIT:
                     self.quit()
-                if e.type == pygame.MOUSEBUTTONDOWN:
+                if e.type == pygame.KEYDOWN:
+                    raise Exception()
+                if e.type == pygame.MOUSEBUTTONDOWN and self.map[e.pos[1]][e.pos[0]] != 0:
                     self.start = e.pos
                     start_selected = True
                     pygame.draw.circle(self.window, start_color, self.start, 5, 0)
@@ -102,7 +104,9 @@ class Visualization:
             for e in EVENTS.get():
                 if e.type == LOCALS.QUIT:
                     self.quit()
-                if e.type == pygame.MOUSEBUTTONDOWN:
+                if e.type == pygame.KEYDOWN:
+                    raise Exception()
+                if e.type == pygame.MOUSEBUTTONDOWN and self.map[e.pos[1]][e.pos[0]] != 0:
                     self.goal = e.pos
                     goal_selected = True
                     pygame.draw.circle(self.window, goal_color, self.goal, 5, 0)
@@ -133,19 +137,23 @@ class Visualization:
             pygame.display.update()
         pygame.image.save(self.window, "result.png")
         time.sleep(4)
+        self.state = Algorithm.HOME
 
 
     def main_loop(self):
         while True:                
             self.window.fill(bg_color)
-        
+            
             if self.state == Algorithm.HOME:
                 self.__home()
             else:
-                self.__paint_map()
-                self.__choose_start_point()
-                self.__choose_goal()
-                self.__execute_algorithm()
+                try:
+                    self.__paint_map()
+                    self.__choose_start_point()
+                    self.__choose_goal()
+                    self.__execute_algorithm()
+                except Exception:
+                    self.state = Algorithm.HOME
 
             pygame.display.update()
 

@@ -62,8 +62,7 @@ class Bug1(PathPlanning):
         self.line = list(bresenham(start[0], start[1], goal[0], goal[1]))
         self.last_wall = Direction.RIGHT
         self.current_state = State.STRAIGHT_LINE
-        self.hit_point = start
-        self.times_hit = 4
+        self.left_hit = False
         self.surroundings = {}
     
     
@@ -100,8 +99,7 @@ class Bug1(PathPlanning):
                         # This never happens
                         pass
                 self.hit_point = self.current_pos
-                # Worst case scenario: has to turn 3 times before being able to make first move
-                self.times_hit = 4
+                self.left_hit = False
         
         elif self.current_state == State.SURROUND:
             x, y = self.current_pos
@@ -109,32 +107,33 @@ class Bug1(PathPlanning):
                 if self.map[y][x + 1] == 255:
                     self.current_pos = (x + 1, y)
                     self.last_wall = Direction.DOWN
+                    self.left_hit = True
                 else:
                     self.last_wall = Direction.UP
             elif self.last_wall == Direction.UP:
                 if self.map[y - 1][x] == 255:
                     self.current_pos = (x, y - 1)
                     self.last_wall = Direction.RIGHT
+                    self.left_hit = True
                 else:
                     self.last_wall = Direction.LEFT
             elif self.last_wall == Direction.LEFT:
                 if self.map[y][x - 1] == 255:
                     self.current_pos = (x - 1, y)
                     self.last_wall = Direction.UP
+                    self.left_hit = True
                 else:
                     self.last_wall = Direction.DOWN
             elif self.last_wall == Direction.DOWN:
                 if self.map[y + 1][x] == 255:
                     self.current_pos = (x, y + 1)
                     self.last_wall = Direction.LEFT
+                    self.left_hit = True
                 else:
                     self.last_wall = Direction.RIGHT
             self.surroundings[self.current_pos] = self.distance(self.current_pos, self.goal)
             
-            if self.current_pos == self.hit_point:
-                self.times_hit -= 1
-            
-            if self.times_hit <= 0:
+            if self.current_pos == self.hit_point and self.left_hit:
                 self.current_state = State.BEST_SURROUNDED
         
         elif self.current_state == State.BEST_SURROUNDED:
