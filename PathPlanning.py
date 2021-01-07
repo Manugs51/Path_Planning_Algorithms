@@ -1,4 +1,5 @@
 import math
+import time, sys
 from bresenham import bresenham
 from enum import Enum
 
@@ -220,11 +221,85 @@ class Bug2(PathPlanning):
                     self.last_wall = Direction.RIGHT
             
             if (self.current_pos in self.line) and self.left_hit:
-                print('x')
                 while self.line[0] != self.current_pos:
                     self.line.pop(0)
                 self.current_state = State.STRAIGHT_LINE
-            else:
-                print(self.left_hit)
         
         return self.current_pos
+
+
+
+class ValueIteration(PathPlanning):
+    
+    def __init__(self, start, goal, map):
+        super().__init__(start, goal, map)
+        self.neighbors_graph = {}
+        self.generate_neighbors()
+        self.distances = {}
+        self.generate_distances()
+        self.dist_goal_start = self.distances[self.start]
+    
+    
+    def generate_distances(self):
+        for key in self.neighbors_graph.keys():
+            self.distances[key] = math.inf
+        self.distances[(self.goal[0],self.goal[1])] = 0
+        
+        queue = [self.goal]
+        
+        while queue:
+            current = queue.pop(0)
+            
+            for neighbor in self.neighbors_graph[current]:
+                is_corner_neighbor = (((current[0] - neighbor[0]) * (current[1] - neighbor[1])) != 0)
+                dist = self.distances[current]
+                if is_corner_neighbor:
+                    dist += math.sqrt(2)
+                else:
+                    dist += 1
+                
+                if dist < self.distances[neighbor] and dist < self.distances[self.start]:
+                    queue.append(neighbor)
+                    self.distances[neighbor] = dist
+    
+    
+    def generate_neighbors(self):
+        # for each point
+        for y in range(len(self.map)):
+            for x in range(len(self.map[0])):
+                # if it is not a border
+                if self.map[y][x] != 0:
+                    neighbors = []
+                    # for each of its neighbors
+                    for i in range(-1,2):
+                        if x+i >= 0 and x+i < len(self.map[0]):
+                            for j in range(-1,2):
+                                if y+j >= 0 and y+j < len(self.map):
+                                    # if they are not borders or the same node
+                                    if i != 0 or j != 0:
+                                        if self.map[y+j][x+i] != 0:
+                                            neighbors.append((x+i, y+j))
+                    self.neighbors_graph[(x,y)] = neighbors
+    
+    
+    def next_step(self):
+        min_dist = math.inf
+        min_neigh = None
+        for neighbor in self.neighbors_graph[self.current_pos]:
+            dist = self.distances[neighbor]
+            if dist < min_dist:
+                min_dist = dist
+                min_neigh = neighbor
+        self.current_pos = min_neigh
+        return min_neigh
+    
+    
+    def distance_map(self):
+        dist_map = {}
+        dist_mul = self.dist_goal_start/254
+        for key in self.distances.keys():
+            if self.distances[key] > self.dist_goal_start:
+                dist_map[key] = 255
+            else:
+                dist_map[key] = self.distances[key]//dist_mul
+        return dist_map

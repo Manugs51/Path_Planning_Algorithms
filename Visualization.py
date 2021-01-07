@@ -7,13 +7,17 @@ import PathPlanning
 
 
 bg_color = (255,255,255)
-border_color = (0,0,0)
+border_color = (255,0,0)
+start_color = (128,128,0)
+goal_color = (0,255,0)
+line_color = (0,0,255)
 
 
 class Algorithm(Enum):
     HOME = 0
     BUG1 = 1
     BUG2 = 2
+    VALUE_ITERATION = 3
 
 
 class Visualization:
@@ -88,7 +92,7 @@ class Visualization:
                 if e.type == pygame.MOUSEBUTTONDOWN:
                     self.start = e.pos
                     start_selected = True
-                    pygame.draw.circle(self.window, (0,255,0), self.start, 5, 0)
+                    pygame.draw.circle(self.window, start_color, self.start, 5, 0)
                     pygame.display.update()
     
     
@@ -101,8 +105,17 @@ class Visualization:
                 if e.type == pygame.MOUSEBUTTONDOWN:
                     self.goal = e.pos
                     goal_selected = True
-                    pygame.draw.circle(self.window, (255,0,0), self.goal, 5, 0)
+                    pygame.draw.circle(self.window, goal_color, self.goal, 5, 0)
                     pygame.display.update()
+    
+    
+    def __paint_distances(self, map):
+        for elem in map.keys():
+            intensity = map[elem]
+            self.window.set_at(elem, (intensity, intensity, intensity))
+        pygame.draw.circle(self.window, start_color, self.start, 5, 0)
+        pygame.draw.circle(self.window, goal_color, self.goal, 5, 0)
+        pygame.display.update()
 
     
     def __execute_algorithm(self):
@@ -110,11 +123,15 @@ class Visualization:
             algorithm = PathPlanning.Bug1(self.start, self.goal, self.map)
         if self.state == Algorithm.BUG2:
             algorithm = PathPlanning.Bug2(self.start, self.goal, self.map)
+        if self.state == Algorithm.VALUE_ITERATION:
+            algorithm = PathPlanning.ValueIteration(self.start, self.goal, self.map)
+            self.__paint_distances(algorithm.distance_map())
         current_pos = self.start
         while current_pos != self.goal:
             current_pos = algorithm.next_step()
-            self.window.set_at((current_pos[0], current_pos[1]), (0,0,255))
+            self.window.set_at((current_pos[0], current_pos[1]), line_color)
             pygame.display.update()
+        pygame.image.save(self.window, "result.png")
         time.sleep(4)
 
 
